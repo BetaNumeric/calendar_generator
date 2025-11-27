@@ -51,7 +51,7 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect } from 'react';
         import { createRoot } from 'react-dom/client';
-        import { Download, ChevronLeft, ChevronRight, Calendar as CalendarIcon, FolderDown, Archive, Loader2, Globe } from 'lucide-react';
+        import { Download, ChevronLeft, ChevronRight, Calendar as CalendarIcon, FolderDown, Archive, Loader2, Globe, Moon, Sun } from 'lucide-react';
 
         // --- Constants & Config ---
 
@@ -83,18 +83,31 @@
             }
         };
 
+        const THEMES = {
+            light: {
+                text: '#4d4d4d',
+                stroke: '#bfbfbf',
+                bg: 'white'
+            },
+            dark: {
+                text: '#ffffff',
+                stroke: '#666666',
+                bg: 'black'
+            }
+        };
+
         const CONFIG = {
           width: 1200,
           height: 900,
           marginX: 50,
           marginTop: 120,
           marginBottom: 50,
-          styles: {
-            titleMonth: { fontFamily: 'Verdana', fontSize: '48pt', fill: '#4d4d4d' },
-            titleYear: { fontFamily: 'Verdana', fontSize: '48pt', fill: '#4d4d4d', textAnchor: 'end' },
-            dayHeader: { fontFamily: 'Verdana', fontSize: '16pt', fill: '#4d4d4d', textAnchor: 'middle' },
-            dateText: { fontFamily: 'Verdana', fontSize: '48pt', fill: '#4d4d4d', textAnchor: 'middle' },
-            lineStroke: { stroke: '#bfbfbf', strokeWidth: '1' }
+          baseStyles: {
+            titleMonth: { fontFamily: 'Verdana', fontSize: '48pt' },
+            titleYear: { fontFamily: 'Verdana', fontSize: '48pt', textAnchor: 'end' },
+            dayHeader: { fontFamily: 'Verdana', fontSize: '16pt', textAnchor: 'middle' },
+            dateText: { fontFamily: 'Verdana', fontSize: '48pt', textAnchor: 'middle' },
+            lineStroke: { strokeWidth: '1' }
           }
         };
 
@@ -115,12 +128,13 @@
         };
 
         // Generate Filename Helper
-        const getFileName = (monthIndex, year, extension, lang) => {
+        const getFileName = (monthIndex, year, extension, lang, darkMode) => {
             const monthNum = String(monthIndex + 1).padStart(2, '0');
             const monthName = LOCALIZATION[lang].months[monthIndex].toLowerCase()
-                .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss') // simple sanitation
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // remove accents
-            return `${monthNum}_${monthName}_${year}.${extension}`;
+                .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss') 
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
+            const suffix = darkMode ? '_dark' : '';
+            return `${monthNum}_${monthName}_${year}${suffix}.${extension}`;
         };
 
         const loadJSZip = () => {
@@ -193,31 +207,41 @@
 
         // --- SVG Generator (String) ---
 
-        const generateSVGString = (year, month, transparentBg, lang) => {
+        const generateSVGString = (year, month, transparentBg, lang, darkMode) => {
           const layout = calculateCalendarLayout(year, month, lang);
-          const { width, height, marginX, styles } = CONFIG;
+          const { width, height, marginX, baseStyles } = CONFIG;
           const currentLoc = LOCALIZATION[lang];
+          const theme = darkMode ? THEMES.dark : THEMES.light;
 
-          const titleMonth = `<text x="${marginX}" y="90" style="${styleToString(styles.titleMonth)}">${currentLoc.months[month]}</text>`;
-          const titleYear = `<text x="${width - marginX}" y="90" style="${styleToString(styles.titleYear)}">${year}</text>`;
+          // Merge base styles with theme colors
+          const s = {
+             titleMonth: { ...baseStyles.titleMonth, fill: theme.text },
+             titleYear: { ...baseStyles.titleYear, fill: theme.text },
+             dayHeader: { ...baseStyles.dayHeader, fill: theme.text },
+             dateText: { ...baseStyles.dateText, fill: theme.text },
+             lineStroke: { ...baseStyles.lineStroke, stroke: theme.stroke }
+          };
+
+          const titleMonth = `<text x="${marginX}" y="90" style="${styleToString(s.titleMonth)}">${currentLoc.months[month]}</text>`;
+          const titleYear = `<text x="${width - marginX}" y="90" style="${styleToString(s.titleYear)}">${year}</text>`;
 
           const vLines = layout.verticalLines.map(l => 
-            `<line x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}" style="${styleToString(styles.lineStroke)}" />`
+            `<line x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}" style="${styleToString(s.lineStroke)}" />`
           ).join('');
 
           const hLines = layout.horizontalLines.map(l => 
-            `<line x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}" style="${styleToString(styles.lineStroke)}" />`
+            `<line x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}" style="${styleToString(s.lineStroke)}" />`
           ).join('');
 
           const headers = layout.headers.map(h => 
-            `<text x="${h.x}" y="${h.y}" style="${styleToString(styles.dayHeader)}">${h.text}</text>`
+            `<text x="${h.x}" y="${h.y}" style="${styleToString(s.dayHeader)}">${h.text}</text>`
           ).join('');
 
           const dates = layout.dates.map(d => 
-            `<text x="${d.x}" y="${d.y}" style="${styleToString(styles.dateText)}">${d.day}</text>`
+            `<text x="${d.x}" y="${d.y}" style="${styleToString(s.dateText)}">${d.day}</text>`
           ).join('');
 
-          const bgStyle = transparentBg ? '' : 'background-color:white;';
+          const bgStyle = transparentBg ? '' : `background-color:${theme.bg};`;
 
           return `<?xml version="1.0" standalone="no"?>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" style="${bgStyle}font-family:Verdana, sans-serif">
@@ -232,7 +256,7 @@
 
 
         // --- Rasterization Helper ---
-        const rasterizeSVG = (svgString, width, height, scale, format, transparent) => {
+        const rasterizeSVG = (svgString, width, height, scale, format, transparent, darkMode) => {
           return new Promise((resolve, reject) => {
             const img = new Image();
             img.onload = () => {
@@ -242,7 +266,8 @@
               const ctx = canvas.getContext('2d');
               
               if (format === 'image/jpeg' || !transparent) {
-                ctx.fillStyle = 'white';
+                // If not transparent, use theme background
+                ctx.fillStyle = darkMode ? 'black' : 'white';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
               }
               
@@ -256,10 +281,19 @@
 
         // --- Components ---
 
-        const CalendarSVGComponent = ({ year, month, transparent, lang }) => {
+        const CalendarSVGComponent = ({ year, month, transparent, lang, darkMode }) => {
           const layout = calculateCalendarLayout(year, month, lang);
-          const { width, height, marginX, styles } = CONFIG;
+          const { width, height, marginX, baseStyles } = CONFIG;
           const currentLoc = LOCALIZATION[lang];
+          const theme = darkMode ? THEMES.dark : THEMES.light;
+          
+          const s = {
+             titleMonth: { ...baseStyles.titleMonth, fill: theme.text },
+             titleYear: { ...baseStyles.titleYear, fill: theme.text },
+             dayHeader: { ...baseStyles.dayHeader, fill: theme.text },
+             dateText: { ...baseStyles.dateText, fill: theme.text },
+             lineStroke: { ...baseStyles.lineStroke, stroke: theme.stroke }
+          };
 
           return (
             <svg
@@ -269,23 +303,23 @@
               height="100%"
               style={{ fontFamily: 'Verdana, sans-serif' }}
             >
-              <text x={marginX} y={90} style={styles.titleMonth}>{currentLoc.months[month]}</text>
-              <text x={width - marginX} y={90} style={styles.titleYear}>{year}</text>
+              <text x={marginX} y={90} style={s.titleMonth}>{currentLoc.months[month]}</text>
+              <text x={width - marginX} y={90} style={s.titleYear}>{year}</text>
 
               {layout.verticalLines.map((l, i) => (
-                <line key={`v-${i}`} {...l} style={styles.lineStroke} />
+                <line key={`v-${i}`} {...l} style={s.lineStroke} />
               ))}
 
               {layout.horizontalLines.map((l, i) => (
-                <line key={`h-${i}`} {...l} style={styles.lineStroke} />
+                <line key={`h-${i}`} {...l} style={s.lineStroke} />
               ))}
 
               {layout.headers.map((h, i) => (
-                <text key={`head-${i}`} x={h.x} y={h.y} style={styles.dayHeader}>{h.text}</text>
+                <text key={`head-${i}`} x={h.x} y={h.y} style={s.dayHeader}>{h.text}</text>
               ))}
 
               {layout.dates.map((d, i) => (
-                <text key={`d-${i}`} x={d.x} y={d.y} style={styles.dateText}>{d.day}</text>
+                <text key={`d-${i}`} x={d.x} y={d.y} style={s.dateText}>{d.day}</text>
               ))}
             </svg>
           );
@@ -303,6 +337,7 @@
           const [transparent, setTransparent] = useState(false);
           const [isZipping, setIsZipping] = useState(false);
           const [lang, setLang] = useState('en');
+          const [darkMode, setDarkMode] = useState(false);
 
           const getExtension = () => exportFormat === 'svg' ? 'svg' : (exportFormat === 'image/jpeg' ? 'jpg' : 'png');
 
@@ -316,7 +351,7 @@
           };
 
           const getMonthData = async (monthIndex) => {
-              const svgString = generateSVGString(year, monthIndex, transparent, lang);
+              const svgString = generateSVGString(year, monthIndex, transparent, lang, darkMode);
               
               if (exportFormat === 'svg') {
                   return {
@@ -330,7 +365,8 @@
                     CONFIG.height, 
                     scale, 
                     exportFormat, 
-                    transparent
+                    transparent,
+                    darkMode
                   );
                   return {
                       data: dataUrl.split(',')[1],
@@ -341,7 +377,7 @@
 
           const generateAndDownloadSingle = async (monthIndex) => {
             const result = await getMonthData(monthIndex);
-            const fileName = getFileName(monthIndex, year, getExtension(), lang);
+            const fileName = getFileName(monthIndex, year, getExtension(), lang, darkMode);
             
             if (result.isBase64) {
                  downloadFile(`data:${exportFormat};base64,${result.data}`, fileName);
@@ -356,12 +392,13 @@
             try {
                 const JSZip = await loadJSZip();
                 const zip = new JSZip();
-                const folderName = `calendar_${year}_${lang}`;
+                const suffix = darkMode ? '_dark' : '';
+                const folderName = `calendar_${year}_${lang}${suffix}`;
                 const folder = zip.folder(folderName);
 
                 for (let i = 0; i < 12; i++) {
                     const result = await getMonthData(i);
-                    const fileName = getFileName(i, year, getExtension(), lang);
+                    const fileName = getFileName(i, year, getExtension(), lang, darkMode);
                     
                     if (result.isBase64) {
                         folder.file(fileName, result.data, {base64: true});
@@ -445,6 +482,17 @@
                         <input type="checkbox" checked={transparent} onChange={(e) => setTransparent(e.target.checked)} disabled={exportFormat === 'image/jpeg'} className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5" />
                         Transparent
                      </label>
+
+                     <div className="w-px h-6 bg-gray-200"></div>
+
+                     {/* Dark Mode Toggle */}
+                     <button 
+                        onClick={() => setDarkMode(!darkMode)}
+                        className={`p-1.5 rounded-md transition-colors border ${darkMode ? 'bg-gray-800 text-yellow-300 border-gray-700' : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50'}`}
+                        title="Toggle Dark Mode"
+                     >
+                        {darkMode ? <Moon size={16} fill="currentColor" /> : <Sun size={16} />}
+                     </button>
                   </div>
 
                   <div className="flex items-center gap-3 w-full md:w-auto justify-end">
@@ -495,13 +543,13 @@
                      <span className="flex items-center gap-2">
                         {exportFormat === 'svg' ? 'Vector' : `${scale}x Resolution`}
                         <span className="w-px h-3 bg-gray-300"></span>
-                        {transparent ? 'Transparent' : 'White'} BG
+                        {transparent ? 'Transparent' : (darkMode ? 'Black' : 'White')} BG
                      </span>
                   </div>
 
-                  <div className="p-8 md:p-12 overflow-auto flex justify-center">
-                     <div className="shadow-sm border border-gray-300 transition-all" style={{ width: '800px', height: '600px', backgroundColor: transparent ? 'transparent' : 'white' }}>
-                         <CalendarSVGComponent year={year} month={activeMonth} transparent={transparent} lang={lang} />
+                  <div className="p-8 md:p-12 overflow-auto flex justify-center" style={{ backgroundColor: transparent ? 'transparent' : (darkMode ? '#222' : '#f3f4f6') }}>
+                     <div className="shadow-sm border border-gray-300 transition-all" style={{ width: '800px', height: '600px', backgroundColor: transparent ? 'transparent' : (darkMode ? 'black' : 'white') }}>
+                         <CalendarSVGComponent year={year} month={activeMonth} transparent={transparent} lang={lang} darkMode={darkMode} />
                      </div>
                   </div>
                 </div>
