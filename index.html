@@ -51,16 +51,37 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect } from 'react';
         import { createRoot } from 'react-dom/client';
-        import { Download, ChevronLeft, ChevronRight, Calendar as CalendarIcon, FolderDown, Archive, Loader2 } from 'lucide-react';
+        import { Download, ChevronLeft, ChevronRight, Calendar as CalendarIcon, FolderDown, Archive, Loader2, Globe } from 'lucide-react';
 
         // --- Constants & Config ---
 
-        const monthNames = [
-          "January", "February", "March", "April", "May", "June",
-          "July", "August", "September", "October", "November", "December"
-        ];
-
-        const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+        const LOCALIZATION = {
+            en: {
+                name: "English",
+                months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+                days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+            },
+            de: {
+                name: "Deutsch",
+                months: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
+                days: ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
+            },
+            fr: {
+                name: "Français",
+                months: ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"],
+                days: ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+            },
+            es: {
+                name: "Español",
+                months: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
+                days: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+            },
+            it: {
+                name: "Italiano",
+                months: ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"],
+                days: ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
+            }
+        };
 
         const CONFIG = {
           width: 1200,
@@ -93,7 +114,15 @@
           }).join(';');
         };
 
-        // Simplified JSZip loader (since we included the script tag in head)
+        // Generate Filename Helper
+        const getFileName = (monthIndex, year, extension, lang) => {
+            const monthNum = String(monthIndex + 1).padStart(2, '0');
+            const monthName = LOCALIZATION[lang].months[monthIndex].toLowerCase()
+                .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss') // simple sanitation
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // remove accents
+            return `${monthNum}_${monthName}_${year}.${extension}`;
+        };
+
         const loadJSZip = () => {
           return new Promise((resolve, reject) => {
             if (window.JSZip) {
@@ -106,8 +135,9 @@
 
         // --- Core Layout Engine ---
 
-        const calculateCalendarLayout = (year, month) => {
+        const calculateCalendarLayout = (year, month, lang) => {
           const { width, height, marginX, marginTop, marginBottom } = CONFIG;
+          const currentLoc = LOCALIZATION[lang];
           
           const daysInMonth = getDaysInMonth(year, month);
           const startDay = getFirstDayOfMonth(year, month);
@@ -152,7 +182,7 @@
             y2: gridStartY + row * singleRowHeight
           }));
 
-          const headers = dayNames.map((name, index) => ({
+          const headers = currentLoc.days.map((name, index) => ({
             text: name,
             x: marginX + index * colWidth + colWidth / 2,
             y: marginTop + 35
@@ -163,11 +193,12 @@
 
         // --- SVG Generator (String) ---
 
-        const generateSVGString = (year, month, transparentBg) => {
-          const layout = calculateCalendarLayout(year, month);
+        const generateSVGString = (year, month, transparentBg, lang) => {
+          const layout = calculateCalendarLayout(year, month, lang);
           const { width, height, marginX, styles } = CONFIG;
+          const currentLoc = LOCALIZATION[lang];
 
-          const titleMonth = `<text x="${marginX}" y="90" style="${styleToString(styles.titleMonth)}">${monthNames[month]}</text>`;
+          const titleMonth = `<text x="${marginX}" y="90" style="${styleToString(styles.titleMonth)}">${currentLoc.months[month]}</text>`;
           const titleYear = `<text x="${width - marginX}" y="90" style="${styleToString(styles.titleYear)}">${year}</text>`;
 
           const vLines = layout.verticalLines.map(l => 
@@ -186,7 +217,6 @@
             `<text x="${d.x}" y="${d.y}" style="${styleToString(styles.dateText)}">${d.day}</text>`
           ).join('');
 
-          // Handle Background
           const bgStyle = transparentBg ? '' : 'background-color:white;';
 
           return `<?xml version="1.0" standalone="no"?>
@@ -211,7 +241,6 @@
               canvas.height = height * scale;
               const ctx = canvas.getContext('2d');
               
-              // If JPG or NOT transparent, fill white background first
               if (format === 'image/jpeg' || !transparent) {
                 ctx.fillStyle = 'white';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -227,9 +256,10 @@
 
         // --- Components ---
 
-        const CalendarSVGComponent = ({ year, month, transparent }) => {
-          const layout = calculateCalendarLayout(year, month);
+        const CalendarSVGComponent = ({ year, month, transparent, lang }) => {
+          const layout = calculateCalendarLayout(year, month, lang);
           const { width, height, marginX, styles } = CONFIG;
+          const currentLoc = LOCALIZATION[lang];
 
           return (
             <svg
@@ -239,7 +269,7 @@
               height="100%"
               style={{ fontFamily: 'Verdana, sans-serif' }}
             >
-              <text x={marginX} y={90} style={styles.titleMonth}>{monthNames[month]}</text>
+              <text x={marginX} y={90} style={styles.titleMonth}>{currentLoc.months[month]}</text>
               <text x={width - marginX} y={90} style={styles.titleYear}>{year}</text>
 
               {layout.verticalLines.map((l, i) => (
@@ -267,11 +297,12 @@
           const [year, setYear] = useState(2025);
           const [activeMonth, setActiveMonth] = useState(0);
           
-          // Export Settings
-          const [exportFormat, setExportFormat] = useState('svg'); // 'svg', 'png', 'jpg'
-          const [scale, setScale] = useState(1); // 1, 2, 4
+          // Settings
+          const [exportFormat, setExportFormat] = useState('svg');
+          const [scale, setScale] = useState(1);
           const [transparent, setTransparent] = useState(false);
           const [isZipping, setIsZipping] = useState(false);
+          const [lang, setLang] = useState('en');
 
           const getExtension = () => exportFormat === 'svg' ? 'svg' : (exportFormat === 'image/jpeg' ? 'jpg' : 'png');
 
@@ -285,7 +316,7 @@
           };
 
           const getMonthData = async (monthIndex) => {
-              const svgString = generateSVGString(year, monthIndex, transparent);
+              const svgString = generateSVGString(year, monthIndex, transparent, lang);
               
               if (exportFormat === 'svg') {
                   return {
@@ -301,7 +332,6 @@
                     exportFormat, 
                     transparent
                   );
-                  // Remove the "data:image/png;base64," prefix for JSZip
                   return {
                       data: dataUrl.split(',')[1],
                       isBase64: true
@@ -311,7 +341,7 @@
 
           const generateAndDownloadSingle = async (monthIndex) => {
             const result = await getMonthData(monthIndex);
-            const fileName = `${monthNames[monthIndex]}_${year}.${getExtension()}`;
+            const fileName = getFileName(monthIndex, year, getExtension(), lang);
             
             if (result.isBase64) {
                  downloadFile(`data:${exportFormat};base64,${result.data}`, fileName);
@@ -326,11 +356,12 @@
             try {
                 const JSZip = await loadJSZip();
                 const zip = new JSZip();
-                const folder = zip.folder(`calendar_${year}`);
+                const folderName = `calendar_${year}_${lang}`;
+                const folder = zip.folder(folderName);
 
                 for (let i = 0; i < 12; i++) {
                     const result = await getMonthData(i);
-                    const fileName = `${monthNames[i]}.${getExtension()}`; 
+                    const fileName = getFileName(i, year, getExtension(), lang);
                     
                     if (result.isBase64) {
                         folder.file(fileName, result.data, {base64: true});
@@ -342,7 +373,7 @@
 
                 const zipContent = await zip.generateAsync({type:"blob"});
                 const url = URL.createObjectURL(zipContent);
-                downloadFile(url, `calendar_${year}_${getExtension()}.zip`);
+                downloadFile(url, `${folderName}.zip`);
                 URL.revokeObjectURL(url);
             } catch (error) {
                 console.error("Zip failed:", error);
@@ -369,41 +400,38 @@
                     </div>
                   </div>
 
-                  {/* Export Settings Toolbar */}
+                  {/* Settings Toolbar */}
                   <div className="flex flex-wrap items-center gap-4 bg-gray-50 p-2 rounded-xl border border-gray-100">
                      
+                     {/* Language Selector */}
+                     <div className="flex items-center gap-2 px-2">
+                        <Globe size={14} className="text-gray-400" />
+                        <select 
+                            value={lang} 
+                            onChange={(e) => setLang(e.target.value)}
+                            className="bg-transparent text-sm font-semibold text-gray-700 focus:outline-none cursor-pointer"
+                        >
+                            {Object.entries(LOCALIZATION).map(([code, info]) => (
+                                <option key={code} value={code}>{info.name}</option>
+                            ))}
+                        </select>
+                     </div>
+                     
+                     <div className="w-px h-6 bg-gray-200"></div>
+
                      {/* Format Selector */}
                      <div className="flex items-center bg-white rounded-lg border border-gray-200 p-1">
-                        <button 
-                          onClick={() => setExportFormat('svg')}
-                          className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${exportFormat === 'svg' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
-                        >
-                          SVG
-                        </button>
+                        <button onClick={() => setExportFormat('svg')} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${exportFormat === 'svg' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}>SVG</button>
                         <div className="w-px h-4 bg-gray-200 mx-1"></div>
-                        <button 
-                          onClick={() => setExportFormat('image/png')}
-                          className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${exportFormat === 'image/png' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
-                        >
-                          PNG
-                        </button>
-                        <button 
-                          onClick={() => setExportFormat('image/jpeg')}
-                          className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${exportFormat === 'image/jpeg' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
-                        >
-                          JPG
-                        </button>
+                        <button onClick={() => setExportFormat('image/png')} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${exportFormat === 'image/png' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}>PNG</button>
+                        <button onClick={() => setExportFormat('image/jpeg')} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${exportFormat === 'image/jpeg' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}>JPG</button>
                      </div>
 
-                     {/* Resolution (Only for Raster) */}
+                     {/* Resolution */}
                      {exportFormat !== 'svg' && (
                         <div className="flex items-center gap-2 text-xs">
                           <span className="text-gray-400 font-medium">Size:</span>
-                          <select 
-                            value={scale} 
-                            onChange={(e) => setScale(Number(e.target.value))}
-                            className="bg-white border border-gray-200 text-gray-700 text-xs rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
+                          <select value={scale} onChange={(e) => setScale(Number(e.target.value))} className="bg-white border border-gray-200 text-gray-700 text-xs rounded-md px-2 py-1.5 focus:outline-none">
                             <option value={1}>1200px</option>
                             <option value={2}>2400px</option>
                             <option value={4}>4800px</option>
@@ -412,22 +440,11 @@
                         </div>
                      )}
 
-                     {/* Transparency (Disabled for JPG) */}
-                     <label className={`flex items-center gap-2 text-xs font-medium px-2 py-1.5 rounded-md border ${
-                         exportFormat === 'image/jpeg' 
-                          ? 'bg-gray-100 text-gray-400 border-transparent cursor-not-allowed' 
-                          : 'bg-white border-gray-200 text-gray-700 cursor-pointer hover:bg-gray-50'
-                       }`}>
-                        <input 
-                          type="checkbox" 
-                          checked={transparent} 
-                          onChange={(e) => setTransparent(e.target.checked)}
-                          disabled={exportFormat === 'image/jpeg'}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
-                        />
+                     {/* Transparency */}
+                     <label className={`flex items-center gap-2 text-xs font-medium px-2 py-1.5 rounded-md border ${exportFormat === 'image/jpeg' ? 'bg-gray-100 text-gray-400 border-transparent cursor-not-allowed' : 'bg-white border-gray-200 text-gray-700 cursor-pointer hover:bg-gray-50'}`}>
+                        <input type="checkbox" checked={transparent} onChange={(e) => setTransparent(e.target.checked)} disabled={exportFormat === 'image/jpeg'} className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5" />
                         Transparent
                      </label>
-
                   </div>
 
                   <div className="flex items-center gap-3 w-full md:w-auto justify-end">
@@ -438,21 +455,12 @@
                         <button onClick={() => setYear(y => y + 1)} className="p-1.5 hover:bg-white rounded transition-colors text-gray-600"><ChevronRight size={16} /></button>
                      </div>
                      
-                     <button
-                      onClick={generateAndDownloadZip}
-                      disabled={isZipping}
-                      className={`flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm ${isZipping ? 'opacity-75 cursor-wait' : 'hover:bg-gray-50'}`}
-                      title="Download all 12 months as a single ZIP file"
-                    >
+                     <button onClick={generateAndDownloadZip} disabled={isZipping} className={`flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm ${isZipping ? 'opacity-75 cursor-wait' : 'hover:bg-gray-50'}`} title="Download all 12 months as a single ZIP file">
                       {isZipping ? <Loader2 className="animate-spin" size={20} /> : <Archive size={20} />}
                       <span className="hidden sm:inline">{isZipping ? 'Zipping...' : 'Zip'}</span>
                     </button>
 
-                     <button
-                      onClick={() => generateAndDownloadSingle(activeMonth)}
-                      disabled={isZipping}
-                      className="flex items-center gap-2 bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
-                    >
+                     <button onClick={() => generateAndDownloadSingle(activeMonth)} disabled={isZipping} className="flex items-center gap-2 bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm">
                       <Download size={16} />
                       <span>Save {exportFormat === 'svg' ? 'SVG' : (exportFormat === 'image/png' ? 'PNG' : 'JPG')}</span>
                     </button>
@@ -464,9 +472,9 @@
                 
                 {/* Month Tabs */}
                 <div className="w-full max-w-5xl mb-6 flex flex-wrap gap-2 justify-center">
-                  {monthNames.map((name, index) => (
+                  {LOCALIZATION[lang].months.map((name, index) => (
                     <button
-                      key={name}
+                      key={index}
                       onClick={() => setActiveMonth(index)}
                       className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
                         activeMonth === index
@@ -483,7 +491,7 @@
                 <div className={`w-full max-w-5xl rounded-xl shadow-2xl border border-gray-200 overflow-hidden relative transition-colors duration-300 ${transparent ? 'bg-checkerboard' : 'bg-white'}`}>
                   
                   <div className="p-3 bg-white border-b border-gray-200 flex justify-between items-center text-xs text-gray-500 font-mono">
-                     <span>Preview: {monthNames[activeMonth]} {year}</span>
+                     <span>Preview: {LOCALIZATION[lang].months[activeMonth]} {year}</span>
                      <span className="flex items-center gap-2">
                         {exportFormat === 'svg' ? 'Vector' : `${scale}x Resolution`}
                         <span className="w-px h-3 bg-gray-300"></span>
@@ -493,7 +501,7 @@
 
                   <div className="p-8 md:p-12 overflow-auto flex justify-center">
                      <div className="shadow-sm border border-gray-300 transition-all" style={{ width: '800px', height: '600px', backgroundColor: transparent ? 'transparent' : 'white' }}>
-                         <CalendarSVGComponent year={year} month={activeMonth} transparent={transparent} />
+                         <CalendarSVGComponent year={year} month={activeMonth} transparent={transparent} lang={lang} />
                      </div>
                   </div>
                 </div>
