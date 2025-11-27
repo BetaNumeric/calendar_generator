@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verdana Calendar Generator</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- JSZip for Zipping files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <!-- Import Map to allow standard ES Module imports in the browser -->
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "lucide-react": "https://esm.sh/lucide-react@0.263.1"
+      }
+    }
+    </script>
+
+    <!-- Babel for processing JSX in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        body { font-family: 'Verdana', sans-serif; }
+        .bg-checkerboard {
+              background-color: #f0f0f0;
+              background-image:
+                linear-gradient(45deg, #e5e5e5 25%, transparent 25%),
+                linear-gradient(-45deg, #e5e5e5 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #e5e5e5 75%),
+                linear-gradient(-45deg, transparent 75%, #e5e5e5 75%);
+              background-size: 20px 20px;
+              background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        /* Custom scrollbar for cleaner look */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #999; }
+    </style>
+</head>
+<body class="bg-gray-50 text-slate-800 h-screen flex flex-col">
+
+    <div id="root" class="h-full flex flex-col"></div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { Download, ChevronLeft, ChevronRight, Calendar as CalendarIcon, FolderDown, Archive, Loader2 } from 'lucide-react';
+
+        // --- Constants & Config ---
+
+        const monthNames = [
+          "January", "February", "March", "April", "May", "June",
+          "July", "August", "September", "October", "November", "December"
+        ];
+
+        const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+        const CONFIG = {
+          width: 1200,
+          height: 900,
+          marginX: 50,
+          marginTop: 120,
+          marginBottom: 50,
+          styles: {
+            titleMonth: { fontFamily: 'Verdana', fontSize: '48pt', fill: '#4d4d4d' },
+            titleYear: { fontFamily: 'Verdana', fontSize: '48pt', fill: '#4d4d4d', textAnchor: 'end' },
+            dayHeader: { fontFamily: 'Verdana', fontSize: '16pt', fill: '#4d4d4d', textAnchor: 'middle' },
+            dateText: { fontFamily: 'Verdana', fontSize: '48pt', fill: '#4d4d4d', textAnchor: 'middle' },
+            lineStroke: { stroke: '#bfbfbf', strokeWidth: '1' }
+          }
+        };
+
+        // --- Helper Functions ---
+
+        const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+
+        const getFirstDayOfMonth = (year, month) => {
+          const day = new Date(year, month, 1).getDay();
+          return day === 0 ? 6 : day - 1; // 0=Mon, 6=Sun
+        };
+
+        const styleToString = (styleObj) => {
+          return Object.entries(styleObj).map(([key, value]) => {
+            const kebabKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+            return `${kebabKey}:${value}`;
+          }).join(';');
+        };
+
+        // Simplified JSZip loader (since we included the script tag in head)
+        const loadJSZip = () => {
+          return new Promise((resolve, reject) => {
+            if (window.JSZip) {
+              resolve(window.JSZip);
+            } else {
+              reject("JSZip library not found.");
+            }
+          });
+        };
+
+        // --- Core Layout Engine ---
+
+        const calculateCalendarLayout = (year, month) => {
+          const { width, height, marginX, marginTop, marginBottom } = CONFIG;
+          
+          const daysInMonth = getDaysInMonth(year, month);
+          const startDay = getFirstDayOfMonth(year, month);
+          
+          const gridWidth = width - (marginX * 2);
+          const gridStartY = marginTop + 50; 
+          
+          const numRows = Math.ceil((startDay + daysInMonth) / 7);
+          const numCols = 7;
+          
+          const colWidth = gridWidth / numCols;
+          const dateAreaHeight = height - (marginTop + 50) - marginBottom;
+          const singleRowHeight = dateAreaHeight / numRows;
+
+          const dates = [];
+          let dayCounter = 1;
+          for (let i = 0; i < numRows; i++) {
+            for (let j = 0; j < 7; j++) {
+              const cellIndex = i * 7 + j;
+              if (cellIndex >= startDay && dayCounter <= daysInMonth) {
+                dates.push({
+                  day: dayCounter,
+                  x: marginX + j * colWidth + colWidth / 2,
+                  y: gridStartY + i * singleRowHeight + singleRowHeight / 2 + 15, 
+                });
+                dayCounter++;
+              }
+            }
+          }
+
+          const verticalLines = [1, 2, 3, 4, 5, 6].map(col => ({
+            x1: marginX + col * colWidth,
+            y1: gridStartY,
+            x2: marginX + col * colWidth,
+            y2: height - marginBottom
+          }));
+
+          const horizontalLines = Array.from({ length: numRows - 1 }, (_, i) => i + 1).map(row => ({
+            x1: marginX,
+            y1: gridStartY + row * singleRowHeight,
+            x2: width - marginX,
+            y2: gridStartY + row * singleRowHeight
+          }));
+
+          const headers = dayNames.map((name, index) => ({
+            text: name,
+            x: marginX + index * colWidth + colWidth / 2,
+            y: marginTop + 35
+          }));
+
+          return { dates, verticalLines, horizontalLines, headers };
+        };
+
+        // --- SVG Generator (String) ---
+
+        const generateSVGString = (year, month, transparentBg) => {
+          const layout = calculateCalendarLayout(year, month);
+          const { width, height, marginX, styles } = CONFIG;
+
+          const titleMonth = `<text x="${marginX}" y="90" style="${styleToString(styles.titleMonth)}">${monthNames[month]}</text>`;
+          const titleYear = `<text x="${width - marginX}" y="90" style="${styleToString(styles.titleYear)}">${year}</text>`;
+
+          const vLines = layout.verticalLines.map(l => 
+            `<line x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}" style="${styleToString(styles.lineStroke)}" />`
+          ).join('');
+
+          const hLines = layout.horizontalLines.map(l => 
+            `<line x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}" style="${styleToString(styles.lineStroke)}" />`
+          ).join('');
+
+          const headers = layout.headers.map(h => 
+            `<text x="${h.x}" y="${h.y}" style="${styleToString(styles.dayHeader)}">${h.text}</text>`
+          ).join('');
+
+          const dates = layout.dates.map(d => 
+            `<text x="${d.x}" y="${d.y}" style="${styleToString(styles.dateText)}">${d.day}</text>`
+          ).join('');
+
+          // Handle Background
+          const bgStyle = transparentBg ? '' : 'background-color:white;';
+
+          return `<?xml version="1.0" standalone="no"?>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" style="${bgStyle}font-family:Verdana, sans-serif">
+          ${titleMonth}
+          ${titleYear}
+          ${vLines}
+          ${hLines}
+          ${headers}
+          ${dates}
+        </svg>`;
+        };
+
+
+        // --- Rasterization Helper ---
+        const rasterizeSVG = (svgString, width, height, scale, format, transparent) => {
+          return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              canvas.width = width * scale;
+              canvas.height = height * scale;
+              const ctx = canvas.getContext('2d');
+              
+              // If JPG or NOT transparent, fill white background first
+              if (format === 'image/jpeg' || !transparent) {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+              }
+              
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              resolve(canvas.toDataURL(format, 0.9)); 
+            };
+            img.onerror = reject;
+            img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgString);
+          });
+        };
+
+        // --- Components ---
+
+        const CalendarSVGComponent = ({ year, month, transparent }) => {
+          const layout = calculateCalendarLayout(year, month);
+          const { width, height, marginX, styles } = CONFIG;
+
+          return (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox={`0 0 ${width} ${height}`}
+              width="100%"
+              height="100%"
+              style={{ fontFamily: 'Verdana, sans-serif' }}
+            >
+              <text x={marginX} y={90} style={styles.titleMonth}>{monthNames[month]}</text>
+              <text x={width - marginX} y={90} style={styles.titleYear}>{year}</text>
+
+              {layout.verticalLines.map((l, i) => (
+                <line key={`v-${i}`} {...l} style={styles.lineStroke} />
+              ))}
+
+              {layout.horizontalLines.map((l, i) => (
+                <line key={`h-${i}`} {...l} style={styles.lineStroke} />
+              ))}
+
+              {layout.headers.map((h, i) => (
+                <text key={`head-${i}`} x={h.x} y={h.y} style={styles.dayHeader}>{h.text}</text>
+              ))}
+
+              {layout.dates.map((d, i) => (
+                <text key={`d-${i}`} x={d.x} y={d.y} style={styles.dateText}>{d.day}</text>
+              ))}
+            </svg>
+          );
+        };
+
+        // --- Main App ---
+
+        function CalendarApp() {
+          const [year, setYear] = useState(2025);
+          const [activeMonth, setActiveMonth] = useState(0);
+          
+          // Export Settings
+          const [exportFormat, setExportFormat] = useState('svg'); // 'svg', 'png', 'jpg'
+          const [scale, setScale] = useState(1); // 1, 2, 4
+          const [transparent, setTransparent] = useState(false);
+          const [isZipping, setIsZipping] = useState(false);
+
+          const getExtension = () => exportFormat === 'svg' ? 'svg' : (exportFormat === 'image/jpeg' ? 'jpg' : 'png');
+
+          const downloadFile = (dataUrl, fileName) => {
+            const link = document.createElement("a");
+            link.href = dataUrl;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          };
+
+          const getMonthData = async (monthIndex) => {
+              const svgString = generateSVGString(year, monthIndex, transparent);
+              
+              if (exportFormat === 'svg') {
+                  return {
+                      data: svgString,
+                      isBase64: false
+                  };
+              } else {
+                  const dataUrl = await rasterizeSVG(
+                    svgString, 
+                    CONFIG.width, 
+                    CONFIG.height, 
+                    scale, 
+                    exportFormat, 
+                    transparent
+                  );
+                  // Remove the "data:image/png;base64," prefix for JSZip
+                  return {
+                      data: dataUrl.split(',')[1],
+                      isBase64: true
+                  };
+              }
+          };
+
+          const generateAndDownloadSingle = async (monthIndex) => {
+            const result = await getMonthData(monthIndex);
+            const fileName = `${monthNames[monthIndex]}_${year}.${getExtension()}`;
+            
+            if (result.isBase64) {
+                 downloadFile(`data:${exportFormat};base64,${result.data}`, fileName);
+            } else {
+                 const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(result.data);
+                 downloadFile(url, fileName);
+            }
+          };
+
+          const generateAndDownloadZip = async () => {
+            setIsZipping(true);
+            try {
+                const JSZip = await loadJSZip();
+                const zip = new JSZip();
+                const folder = zip.folder(`calendar_${year}`);
+
+                for (let i = 0; i < 12; i++) {
+                    const result = await getMonthData(i);
+                    const fileName = `${monthNames[i]}.${getExtension()}`; 
+                    
+                    if (result.isBase64) {
+                        folder.file(fileName, result.data, {base64: true});
+                    } else {
+                        folder.file(fileName, result.data);
+                    }
+                    if (exportFormat !== 'svg') await new Promise(r => setTimeout(r, 50));
+                }
+
+                const zipContent = await zip.generateAsync({type:"blob"});
+                const url = URL.createObjectURL(zipContent);
+                downloadFile(url, `calendar_${year}_${getExtension()}.zip`);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error("Zip failed:", error);
+                alert("Failed to generate Zip file. Please try downloading individual files.");
+            } finally {
+                setIsZipping(false);
+            }
+          };
+
+          return (
+            <div className="flex-1 flex flex-col font-sans text-slate-800">
+              
+              {/* Top Bar */}
+              <header className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
+                <div className="px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                  
+                  <div className="flex items-center gap-3 w-full md:w-auto">
+                    <div className="p-2 bg-gray-800 rounded-lg text-white">
+                      <CalendarIcon size={24} />
+                    </div>
+                    <div>
+                      <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-tight">Calendar Gen</h1>
+                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Vector & Raster</p>
+                    </div>
+                  </div>
+
+                  {/* Export Settings Toolbar */}
+                  <div className="flex flex-wrap items-center gap-4 bg-gray-50 p-2 rounded-xl border border-gray-100">
+                     
+                     {/* Format Selector */}
+                     <div className="flex items-center bg-white rounded-lg border border-gray-200 p-1">
+                        <button 
+                          onClick={() => setExportFormat('svg')}
+                          className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${exportFormat === 'svg' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                        >
+                          SVG
+                        </button>
+                        <div className="w-px h-4 bg-gray-200 mx-1"></div>
+                        <button 
+                          onClick={() => setExportFormat('image/png')}
+                          className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${exportFormat === 'image/png' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                        >
+                          PNG
+                        </button>
+                        <button 
+                          onClick={() => setExportFormat('image/jpeg')}
+                          className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${exportFormat === 'image/jpeg' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                        >
+                          JPG
+                        </button>
+                     </div>
+
+                     {/* Resolution (Only for Raster) */}
+                     {exportFormat !== 'svg' && (
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-gray-400 font-medium">Size:</span>
+                          <select 
+                            value={scale} 
+                            onChange={(e) => setScale(Number(e.target.value))}
+                            className="bg-white border border-gray-200 text-gray-700 text-xs rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value={1}>1200px</option>
+                            <option value={2}>2400px</option>
+                            <option value={4}>4800px</option>
+                            <option value={8}>9600px</option>
+                          </select>
+                        </div>
+                     )}
+
+                     {/* Transparency (Disabled for JPG) */}
+                     <label className={`flex items-center gap-2 text-xs font-medium px-2 py-1.5 rounded-md border ${
+                         exportFormat === 'image/jpeg' 
+                          ? 'bg-gray-100 text-gray-400 border-transparent cursor-not-allowed' 
+                          : 'bg-white border-gray-200 text-gray-700 cursor-pointer hover:bg-gray-50'
+                       }`}>
+                        <input 
+                          type="checkbox" 
+                          checked={transparent} 
+                          onChange={(e) => setTransparent(e.target.checked)}
+                          disabled={exportFormat === 'image/jpeg'}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                        />
+                        Transparent
+                     </label>
+
+                  </div>
+
+                  <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+                     {/* Year Control */}
+                     <div className="flex items-center bg-gray-100 rounded-lg p-1 border border-gray-200">
+                        <button onClick={() => setYear(y => y - 1)} className="p-1.5 hover:bg-white rounded transition-colors text-gray-600"><ChevronLeft size={16} /></button>
+                        <span className="w-14 text-center font-bold text-sm text-gray-700 font-mono">{year}</span>
+                        <button onClick={() => setYear(y => y + 1)} className="p-1.5 hover:bg-white rounded transition-colors text-gray-600"><ChevronRight size={16} /></button>
+                     </div>
+                     
+                     <button
+                      onClick={generateAndDownloadZip}
+                      disabled={isZipping}
+                      className={`flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm ${isZipping ? 'opacity-75 cursor-wait' : 'hover:bg-gray-50'}`}
+                      title="Download all 12 months as a single ZIP file"
+                    >
+                      {isZipping ? <Loader2 className="animate-spin" size={20} /> : <Archive size={20} />}
+                      <span className="hidden sm:inline">{isZipping ? 'Zipping...' : 'Zip'}</span>
+                    </button>
+
+                     <button
+                      onClick={() => generateAndDownloadSingle(activeMonth)}
+                      disabled={isZipping}
+                      className="flex items-center gap-2 bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                    >
+                      <Download size={16} />
+                      <span>Save {exportFormat === 'svg' ? 'SVG' : (exportFormat === 'image/png' ? 'PNG' : 'JPG')}</span>
+                    </button>
+                  </div>
+                </div>
+              </header>
+
+              <main className="flex-1 flex flex-col items-center p-8 overflow-y-auto">
+                
+                {/* Month Tabs */}
+                <div className="w-full max-w-5xl mb-6 flex flex-wrap gap-2 justify-center">
+                  {monthNames.map((name, index) => (
+                    <button
+                      key={name}
+                      onClick={() => setActiveMonth(index)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                        activeMonth === index
+                          ? 'bg-gray-800 text-white shadow-md transform scale-105'
+                          : 'bg-white text-gray-500 hover:bg-gray-100 border border-gray-200 hover:text-gray-900'
+                      }`}
+                    >
+                      {name.slice(0, 3)}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Preview Container */}
+                <div className={`w-full max-w-5xl rounded-xl shadow-2xl border border-gray-200 overflow-hidden relative transition-colors duration-300 ${transparent ? 'bg-checkerboard' : 'bg-white'}`}>
+                  
+                  <div className="p-3 bg-white border-b border-gray-200 flex justify-between items-center text-xs text-gray-500 font-mono">
+                     <span>Preview: {monthNames[activeMonth]} {year}</span>
+                     <span className="flex items-center gap-2">
+                        {exportFormat === 'svg' ? 'Vector' : `${scale}x Resolution`}
+                        <span className="w-px h-3 bg-gray-300"></span>
+                        {transparent ? 'Transparent' : 'White'} BG
+                     </span>
+                  </div>
+
+                  <div className="p-8 md:p-12 overflow-auto flex justify-center">
+                     <div className="shadow-sm border border-gray-300 transition-all" style={{ width: '800px', height: '600px', backgroundColor: transparent ? 'transparent' : 'white' }}>
+                         <CalendarSVGComponent year={year} month={activeMonth} transparent={transparent} />
+                     </div>
+                  </div>
+                </div>
+                
+                <div className="mt-8 max-w-2xl text-center text-gray-500 text-xs">
+                   <p>Tip: Use <strong>4x</strong> resolution for high-quality printing. Transparency is only available for SVG and PNG formats.</p>
+                </div>
+
+              </main>
+            </div>
+          );
+        }
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<CalendarApp />);
+    </script>
+</body>
+</html>
