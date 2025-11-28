@@ -45,6 +45,25 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #999; }
+        
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            overflow: hidden;
+            background: none;
+            cursor: pointer;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-slate-800 h-screen flex flex-col">
@@ -54,7 +73,12 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect } from 'react';
         import { createRoot } from 'react-dom/client';
-        import { Download, ChevronLeft, ChevronRight, Calendar as CalendarIcon, FolderDown, Archive, Loader2, Globe, Moon, Sun, Type } from 'lucide-react';
+        import { 
+            Download, ChevronLeft, ChevronRight, Calendar as CalendarIcon, 
+            FolderDown, Archive, Loader2, Globe, Moon, Sun, Type, Sliders, 
+            RotateCcw, LayoutGrid, AlignCenter, AlignLeft, AlignRight,
+            ArrowUpToLine, ArrowDownToLine, Minus, Grid, MoveHorizontal, Maximize, Slash
+        } from 'lucide-react';
 
         // --- Constants & Config ---
 
@@ -83,6 +107,61 @@
                 name: "Italiano",
                 months: ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"],
                 days: ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
+            },
+            pt: {
+                name: "Português",
+                months: ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
+                days: ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
+            },
+            nl: {
+                name: "Nederlands",
+                months: ["Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December"],
+                days: ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"]
+            },
+            pl: {
+                name: "Polski",
+                months: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"],
+                days: ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"]
+            },
+            ro: {
+                name: "Română",
+                months: ["Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie", "Iulie", "August", "Septembrie", "Octombrie", "Noiembrie", "Decembrie"],
+                days: ["Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă", "Duminică"]
+            },
+            da: {
+                name: "Dansk",
+                months: ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"],
+                days: ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"]
+            },
+            no: {
+                name: "Norsk",
+                months: ["Januar", "Februar", "Mars", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Desember"],
+                days: ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"]
+            },
+            sv: {
+                name: "Svenska",
+                months: ["Januari", "Februari", "Mars", "April", "Maj", "Juni", "Juli", "Augusti", "September", "Oktober", "November", "December"],
+                days: ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"]
+            },
+            tr: {
+                name: "Türkçe",
+                months: ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"],
+                days: ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
+            },
+            uk: {
+                name: "Українська",
+                months: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"],
+                days: ["Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота", "Неділя"]
+            },
+            ru: {
+                name: "Русский",
+                months: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"],
+                days: ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"]
+            },
+            el: {
+                name: "Ελληνικά",
+                months: ["Ιανουάριος", "Φεβρουάριος", "Μάρτιος", "Απρίλιος", "Μάιος", "Ιούνιος", "Ιούλιος", "Αύγουστος", "Σεπτέμβριος", "Οκτώβριος", "Νοέμβριος", "Δεκέμβριος"],
+                days: ["Δευτέρα", "Τρίτη", " Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο", "Κυριακή"]
             }
         };
 
@@ -95,58 +174,52 @@
             "Trebuchet MS": "'Trebuchet MS', sans-serif"
         };
 
-        const THEMES = {
-            light: {
-                text: '#4d4d4d',
-                stroke: '#bfbfbf',
-                bg: 'white'
-            },
-            dark: {
-                text: '#ffffff',
-                stroke: '#666666',
-                bg: 'black'
-            }
+        const DEFAULTS = {
+            textColor: '#4d4d4d',
+            bgColor: '#ffffff',
+            strokeColor: '#bfbfbf',
+            dayFontSize: 48,
+            alignX: 'center',
+            alignY: 'center',
+            margin: 50,
+            startOnSunday: false
         };
 
         const CONFIG = {
           width: 1200,
           height: 900,
-          marginX: 50,
           marginTop: 120,
           marginBottom: 50,
-          baseStyles: {
-            titleMonth: { fontSize: '48pt' },
-            titleYear: { fontSize: '48pt', textAnchor: 'end' },
-            dayHeader: { fontSize: '16pt', textAnchor: 'middle' },
-            dateText: { fontSize: '48pt', textAnchor: 'middle' },
-            lineStroke: { strokeWidth: '1' }
-          }
         };
 
         // --- Helper Functions ---
 
         const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
 
-        const getFirstDayOfMonth = (year, month) => {
+        // 0 = Sunday, 1 = Monday ... 6 = Saturday
+        const getFirstDayOfMonth = (year, month, startOnSunday) => {
           const day = new Date(year, month, 1).getDay();
-          return day === 0 ? 6 : day - 1; // 0=Mon, 6=Sun
+          if (startOnSunday) {
+              return day; // Sunday (0) is 0, Monday (1) is 1...
+          } else {
+              // ISO: Monday (1) is 0, Sunday (0) is 6
+              return day === 0 ? 6 : day - 1; 
+          }
         };
 
         const styleToString = (styleObj) => {
           return Object.entries(styleObj).map(([key, value]) => {
             const kebabKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-            return key.replace(/([A-Z])/g, '-$1').toLowerCase() + ':' + value;
+            return kebabKey + ':' + value;
           }).join(';');
         };
 
-        // Generate Filename Helper
-        const getFileName = (monthIndex, year, extension, lang, darkMode) => {
+        const getFileName = (monthIndex, year, extension, lang) => {
             const monthNum = String(monthIndex + 1).padStart(2, '0');
             const monthName = LOCALIZATION[lang].months[monthIndex].toLowerCase()
                 .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss') 
                 .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
-            const suffix = darkMode ? '_dark' : '';
-            return monthNum + '_' + monthName + '_' + year + suffix + '.' + extension;
+            return monthNum + '_' + monthName + '_' + year + '.' + extension;
         };
 
         const loadJSZip = () => {
@@ -161,12 +234,18 @@
 
         // --- Core Layout Engine ---
 
-        const calculateCalendarLayout = (year, month, lang) => {
-          const { width, height, marginX, marginTop, marginBottom } = CONFIG;
-          const currentLoc = LOCALIZATION[lang];
+        const calculateCalendarLayout = (year, month, lang, alignX, alignY, dayFontSize, marginX, startOnSunday) => {
+          const { width, height, marginTop, marginBottom } = CONFIG;
+          let currentLocDays = [...LOCALIZATION[lang].days];
+          
+          // Rotate days if starting on Sunday
+          if (startOnSunday) {
+              const sunday = currentLocDays.pop();
+              currentLocDays.unshift(sunday);
+          }
           
           const daysInMonth = getDaysInMonth(year, month);
-          const startDay = getFirstDayOfMonth(year, month);
+          const startDay = getFirstDayOfMonth(year, month, startOnSunday);
           
           const gridWidth = width - (marginX * 2);
           const gridStartY = marginTop + 50; 
@@ -177,16 +256,42 @@
           const dateAreaHeight = height - (marginTop + 50) - marginBottom;
           const singleRowHeight = dateAreaHeight / numRows;
 
+          // Padding for alignment
+          const pad = 15; 
+
           const dates = [];
           let dayCounter = 1;
           for (let i = 0; i < numRows; i++) {
             for (let j = 0; j < 7; j++) {
               const cellIndex = i * 7 + j;
               if (cellIndex >= startDay && dayCounter <= daysInMonth) {
+                
+                let x, y, anchor;
+                
+                // Horizontal Calculation
+                if (alignX === 'left') {
+                    x = marginX + j * colWidth + pad;
+                    anchor = 'start';
+                } else if (alignX === 'center') {
+                    x = marginX + j * colWidth + colWidth / 2;
+                    anchor = 'middle';
+                } else { // right
+                    x = marginX + (j + 1) * colWidth - pad;
+                    anchor = 'end';
+                }
+
+                // Vertical Calculation
+                if (alignY === 'top') {
+                    y = gridStartY + i * singleRowHeight + pad + dayFontSize; 
+                } else if (alignY === 'center') {
+                    y = gridStartY + i * singleRowHeight + singleRowHeight / 2 + (dayFontSize * 0.35); 
+                } else { // bottom
+                    y = gridStartY + (i + 1) * singleRowHeight - pad;
+                }
+
                 dates.push({
                   day: dayCounter,
-                  x: marginX + j * colWidth + colWidth / 2,
-                  y: gridStartY + i * singleRowHeight + singleRowHeight / 2 + 15, 
+                  x, y, anchor
                 });
                 dayCounter++;
               }
@@ -207,7 +312,7 @@
             y2: gridStartY + row * singleRowHeight
           }));
 
-          const headers = currentLoc.days.map((name, index) => ({
+          const headers = currentLocDays.map((name, index) => ({
             text: name,
             x: marginX + index * colWidth + colWidth / 2,
             y: marginTop + 35
@@ -218,45 +323,44 @@
 
         // --- SVG Generator (String) ---
 
-        const generateSVGString = (year, month, transparentBg, lang, darkMode, fontName) => {
-          const layout = calculateCalendarLayout(year, month, lang);
-          const { width, height, marginX, baseStyles } = CONFIG;
+        const generateSVGString = (year, month, transparentBg, lang, fontName, colors, dayFontSize, alignX, alignY, marginX, startOnSunday) => {
+          const layout = calculateCalendarLayout(year, month, lang, alignX, alignY, dayFontSize, marginX, startOnSunday);
+          const { width, height } = CONFIG;
           const currentLoc = LOCALIZATION[lang];
-          const theme = darkMode ? THEMES.dark : THEMES.light;
           const fontFamily = FONTS[fontName];
 
-          // Merge base styles with theme colors and selected font
-          const s = {
-             titleMonth: { ...baseStyles.titleMonth, fill: theme.text, fontFamily },
-             titleYear: { ...baseStyles.titleYear, fill: theme.text, fontFamily },
-             dayHeader: { ...baseStyles.dayHeader, fill: theme.text, fontFamily },
-             dateText: { ...baseStyles.dateText, fill: theme.text, fontFamily },
-             lineStroke: { ...baseStyles.lineStroke, stroke: theme.stroke }
-          };
+          const commonStyle = `font-family:${fontFamily};fill:${colors.textColor}`;
+          
+          const titleMonthStyle = `${commonStyle};font-size:48pt`;
+          const titleYearStyle = `${commonStyle};font-size:48pt;text-anchor:end`;
+          const headerStyle = `${commonStyle};font-size:16pt;text-anchor:middle`;
+          const lineStyle = `stroke:${colors.strokeColor};stroke-width:1`;
+          const dateStyle = `${commonStyle};font-size:${dayFontSize}pt`; 
 
-          const titleMonth = '<text x="' + marginX + '" y="90" style="' + styleToString(s.titleMonth) + '">' + currentLoc.months[month] + '</text>';
-          const titleYear = '<text x="' + (width - marginX) + '" y="90" style="' + styleToString(s.titleYear) + '">' + year + '</text>';
+          const titleMonth = '<text x="' + marginX + '" y="90" style="' + titleMonthStyle + '">' + currentLoc.months[month] + '</text>';
+          const titleYear = '<text x="' + (width - marginX) + '" y="90" style="' + titleYearStyle + '">' + year + '</text>';
 
           const vLines = layout.verticalLines.map(l => 
-            '<line x1="' + l.x1 + '" y1="' + l.y1 + '" x2="' + l.x2 + '" y2="' + l.y2 + '" style="' + styleToString(s.lineStroke) + '" />'
+            '<line x1="' + l.x1 + '" y1="' + l.y1 + '" x2="' + l.x2 + '" y2="' + l.y2 + '" style="' + lineStyle + '" />'
           ).join('');
 
           const hLines = layout.horizontalLines.map(l => 
-            '<line x1="' + l.x1 + '" y1="' + l.y1 + '" x2="' + l.x2 + '" y2="' + l.y2 + '" style="' + styleToString(s.lineStroke) + '" />'
+            '<line x1="' + l.x1 + '" y1="' + l.y1 + '" x2="' + l.x2 + '" y2="' + l.y2 + '" style="' + lineStyle + '" />'
           ).join('');
 
           const headers = layout.headers.map(h => 
-            '<text x="' + h.x + '" y="' + h.y + '" style="' + styleToString(s.dayHeader) + '">' + h.text + '</text>'
+            '<text x="' + h.x + '" y="' + h.y + '" style="' + headerStyle + '">' + h.text + '</text>'
           ).join('');
 
           const dates = layout.dates.map(d => 
-            '<text x="' + d.x + '" y="' + d.y + '" style="' + styleToString(s.dateText) + '">' + d.day + '</text>'
+            '<text x="' + d.x + '" y="' + d.y + '" style="' + dateStyle + ';text-anchor:' + d.anchor + '">' + d.day + '</text>'
           ).join('');
 
-          const bgStyle = transparentBg ? '' : 'background-color:' + theme.bg + ';';
+          const bgStyle = transparentBg ? '' : 'background-color:' + colors.bgColor + ';';
 
           return '<?xml version="1.0" standalone="no"?>\n' +
             '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" width="' + width + '" height="' + height + '" style="' + bgStyle + 'font-family:' + fontFamily + '">' +
+              (transparentBg ? '' : '<rect width="100%" height="100%" fill="' + colors.bgColor + '"/>') +
               titleMonth +
               titleYear +
               vLines +
@@ -268,7 +372,7 @@
 
 
         // --- Rasterization Helper ---
-        const rasterizeSVG = (svgString, width, height, scale, format, transparent, darkMode) => {
+        const rasterizeSVG = (svgString, width, height, scale, format, transparent, bgColor) => {
           return new Promise((resolve, reject) => {
             const img = new Image();
             img.onload = () => {
@@ -278,8 +382,7 @@
               const ctx = canvas.getContext('2d');
               
               if (format === 'image/jpeg' || !transparent) {
-                // If not transparent, use theme background
-                ctx.fillStyle = darkMode ? 'black' : 'white';
+                ctx.fillStyle = bgColor;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
               }
               
@@ -293,21 +396,12 @@
 
         // --- Components ---
 
-        const CalendarSVGComponent = ({ year, month, transparent, lang, darkMode, fontName }) => {
-          const layout = calculateCalendarLayout(year, month, lang);
-          const { width, height, marginX, baseStyles } = CONFIG;
+        const CalendarSVGComponent = ({ year, month, transparent, lang, fontName, colors, dayFontSize, alignX, alignY, marginX, startOnSunday }) => {
+          const layout = calculateCalendarLayout(year, month, lang, alignX, alignY, dayFontSize, marginX, startOnSunday);
+          const { width, height } = CONFIG;
           const currentLoc = LOCALIZATION[lang];
-          const theme = darkMode ? THEMES.dark : THEMES.light;
           const fontFamily = FONTS[fontName];
           
-          const s = {
-             titleMonth: { ...baseStyles.titleMonth, fill: theme.text, fontFamily },
-             titleYear: { ...baseStyles.titleYear, fill: theme.text, fontFamily },
-             dayHeader: { ...baseStyles.dayHeader, fill: theme.text, fontFamily },
-             dateText: { ...baseStyles.dateText, fill: theme.text, fontFamily },
-             lineStroke: { ...baseStyles.lineStroke, stroke: theme.stroke }
-          };
-
           return (
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -316,23 +410,26 @@
               height="100%"
               style={{ fontFamily: fontFamily }}
             >
-              <text x={marginX} y={90} style={s.titleMonth}>{currentLoc.months[month]}</text>
-              <text x={width - marginX} y={90} style={s.titleYear}>{year}</text>
+              {/* React Preview Background */}
+              {!transparent && <rect width="100%" height="100%" fill={colors.bgColor} />}
+
+              <text x={marginX} y={90} style={{ fontSize: '48pt', fill: colors.textColor }}>{currentLoc.months[month]}</text>
+              <text x={width - marginX} y={90} style={{ fontSize: '48pt', fill: colors.textColor, textAnchor: 'end' }}>{year}</text>
 
               {layout.verticalLines.map((l, i) => (
-                <line key={'v-' + i} {...l} style={s.lineStroke} />
+                <line key={'v-' + i} {...l} style={{ stroke: colors.strokeColor, strokeWidth: 1 }} />
               ))}
 
               {layout.horizontalLines.map((l, i) => (
-                <line key={'h-' + i} {...l} style={s.lineStroke} />
+                <line key={'h-' + i} {...l} style={{ stroke: colors.strokeColor, strokeWidth: 1 }} />
               ))}
 
               {layout.headers.map((h, i) => (
-                <text key={'head-' + i} x={h.x} y={h.y} style={s.dayHeader}>{h.text}</text>
+                <text key={'head-' + i} x={h.x} y={h.y} style={{ fontSize: '16pt', fill: colors.textColor, textAnchor: 'middle' }}>{h.text}</text>
               ))}
 
               {layout.dates.map((d, i) => (
-                <text key={'d-' + i} x={d.x} y={d.y} style={s.dateText}>{d.day}</text>
+                <text key={'d-' + i} x={d.x} y={d.y} style={{ fontSize: dayFontSize + 'pt', fill: colors.textColor, textAnchor: d.anchor }}>{d.day}</text>
               ))}
             </svg>
           );
@@ -344,16 +441,52 @@
           const [year, setYear] = useState(new Date().getFullYear() + 1);
           const [activeMonth, setActiveMonth] = useState(0);
           
-          // Settings
+          // Basic Settings
           const [exportFormat, setExportFormat] = useState('svg');
           const [scale, setScale] = useState(8);
           const [transparent, setTransparent] = useState(false);
           const [isZipping, setIsZipping] = useState(false);
           const [lang, setLang] = useState('en');
-          const [darkMode, setDarkMode] = useState(false);
+          
+          // Advanced State
+          const [showAdvanced, setShowAdvanced] = useState(false);
+          const [textColor, setTextColor] = useState(DEFAULTS.textColor);
+          const [bgColor, setBgColor] = useState(DEFAULTS.bgColor);
+          const [strokeColor, setStrokeColor] = useState(DEFAULTS.strokeColor);
+          const [dayFontSize, setDayFontSize] = useState(DEFAULTS.dayFontSize);
+          const [alignX, setAlignX] = useState(DEFAULTS.alignX);
+          const [alignY, setAlignY] = useState(DEFAULTS.alignY);
           const [fontName, setFontName] = useState('Verdana');
+          const [margin, setMargin] = useState(DEFAULTS.margin);
+          const [startOnSunday, setStartOnSunday] = useState(DEFAULTS.startOnSunday);
 
           const getExtension = () => exportFormat === 'svg' ? 'svg' : (exportFormat === 'image/jpeg' ? 'jpg' : 'png');
+
+          // Presets
+          const toggleDarkMode = () => {
+             if (bgColor === '#ffffff') {
+                 setTextColor('#ffffff');
+                 setBgColor('#000000');
+                 setStrokeColor('#666666');
+             } else {
+                 setTextColor(DEFAULTS.textColor);
+                 setBgColor(DEFAULTS.bgColor);
+                 setStrokeColor(DEFAULTS.strokeColor);
+             }
+          };
+
+          const resetSettings = () => {
+              setTextColor(DEFAULTS.textColor);
+              setBgColor(DEFAULTS.bgColor);
+              setStrokeColor(DEFAULTS.strokeColor);
+              setDayFontSize(DEFAULTS.dayFontSize);
+              setAlignX(DEFAULTS.alignX);
+              setAlignY(DEFAULTS.alignY);
+              setFontName('Verdana');
+              setMargin(DEFAULTS.margin);
+              setStartOnSunday(DEFAULTS.startOnSunday);
+              setTransparent(false);
+          };
 
           const downloadFile = (dataUrl, fileName) => {
             const link = document.createElement("a");
@@ -365,7 +498,8 @@
           };
 
           const getMonthData = async (monthIndex) => {
-              const svgString = generateSVGString(year, monthIndex, transparent, lang, darkMode, fontName);
+              const colors = { textColor, bgColor, strokeColor };
+              const svgString = generateSVGString(year, monthIndex, transparent, lang, fontName, colors, dayFontSize, alignX, alignY, margin, startOnSunday);
               
               if (exportFormat === 'svg') {
                   return {
@@ -380,7 +514,7 @@
                     scale, 
                     exportFormat, 
                     transparent,
-                    darkMode
+                    bgColor
                   );
                   return {
                       data: dataUrl.split(',')[1],
@@ -391,7 +525,7 @@
 
           const generateAndDownloadSingle = async (monthIndex) => {
             const result = await getMonthData(monthIndex);
-            const fileName = getFileName(monthIndex, year, getExtension(), lang, darkMode);
+            const fileName = getFileName(monthIndex, year, getExtension(), lang);
             
             if (result.isBase64) {
                  downloadFile(`data:${exportFormat};base64,${result.data}`, fileName);
@@ -406,13 +540,12 @@
             try {
                 const JSZip = await loadJSZip();
                 const zip = new JSZip();
-                const suffix = darkMode ? '_dark' : '';
-                const folderName = `calendar_${year}_${lang}${suffix}`;
+                const folderName = `calendar_${year}_${lang}`;
                 const folder = zip.folder(folderName);
 
                 for (let i = 0; i < 12; i++) {
                     const result = await getMonthData(i);
-                    const fileName = getFileName(i, year, getExtension(), lang, darkMode);
+                    const fileName = getFileName(i, year, getExtension(), lang);
                     
                     if (result.isBase64) {
                         folder.file(fileName, result.data, {base64: true});
@@ -451,17 +584,13 @@
                     </div>
                   </div>
 
-                  {/* Settings Toolbar */}
+                  {/* Main Toolbar */}
                   <div className="flex flex-wrap items-center gap-4 bg-gray-50 p-2 rounded-xl border border-gray-100">
                      
-                     {/* Language Selector */}
+                     {/* Language */}
                      <div className="flex items-center gap-2 px-2">
                         <Globe size={14} className="text-gray-400" />
-                        <select 
-                            value={lang} 
-                            onChange={(e) => setLang(e.target.value)}
-                            className="bg-transparent text-sm font-semibold text-gray-700 focus:outline-none cursor-pointer"
-                        >
+                        <select value={lang} onChange={(e) => setLang(e.target.value)} className="bg-transparent text-sm font-semibold text-gray-700 focus:outline-none cursor-pointer w-24">
                             {Object.entries(LOCALIZATION).map(([code, info]) => (
                                 <option key={code} value={code}>{info.name}</option>
                             ))}
@@ -470,23 +599,7 @@
 
                      <div className="w-px h-6 bg-gray-200"></div>
 
-                     {/* Font Selector */}
-                     <div className="flex items-center gap-2 px-2">
-                        <Type size={14} className="text-gray-400" />
-                        <select 
-                            value={fontName} 
-                            onChange={(e) => setFontName(e.target.value)}
-                            className="bg-transparent text-sm font-semibold text-gray-700 focus:outline-none cursor-pointer max-w-[100px]"
-                        >
-                            {Object.keys(FONTS).map((f) => (
-                                <option key={f} value={f}>{f}</option>
-                            ))}
-                        </select>
-                     </div>
-                     
-                     <div className="w-px h-6 bg-gray-200"></div>
-
-                     {/* Format Selector */}
+                     {/* Format */}
                      <div className="flex items-center bg-white rounded-lg border border-gray-200 p-1">
                         <button onClick={() => setExportFormat('svg')} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${exportFormat === 'svg' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}>SVG</button>
                         <div className="w-px h-4 bg-gray-200 mx-1"></div>
@@ -507,33 +620,28 @@
                         </div>
                      )}
 
-                     {/* Transparency */}
-                     <label className={`flex items-center gap-2 text-xs font-medium px-2 py-1.5 rounded-md border ${exportFormat === 'image/jpeg' ? 'bg-gray-100 text-gray-400 border-transparent cursor-not-allowed' : 'bg-white border-gray-200 text-gray-700 cursor-pointer hover:bg-gray-50'}`}>
-                        <input type="checkbox" checked={transparent} onChange={(e) => setTransparent(e.target.checked)} disabled={exportFormat === 'image/jpeg'} className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5" />
-                        Transparent
-                     </label>
-
                      <div className="w-px h-6 bg-gray-200"></div>
 
-                     {/* Dark Mode Toggle */}
+                     {/* Advanced Toggle */}
                      <button 
-                        onClick={() => setDarkMode(!darkMode)}
-                        className={`p-1.5 rounded-md transition-colors border ${darkMode ? 'bg-gray-800 text-yellow-300 border-gray-700' : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50'}`}
-                        title="Toggle Dark Mode"
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold border transition-colors ${showAdvanced ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
                      >
-                        {darkMode ? <Moon size={16} fill="currentColor" /> : <Sun size={16} />}
+                        <Sliders size={14} />
+                        Adjust
                      </button>
                   </div>
 
+                  {/* Right Actions */}
                   <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-                     {/* Year Control */}
+                     {/* Year */}
                      <div className="flex items-center bg-gray-100 rounded-lg p-1 border border-gray-200">
                         <button onClick={() => setYear(y => y - 1)} className="p-1.5 hover:bg-white rounded transition-colors text-gray-600"><ChevronLeft size={16} /></button>
                         <span className="w-14 text-center font-bold text-sm text-gray-700 font-mono">{year}</span>
                         <button onClick={() => setYear(y => y + 1)} className="p-1.5 hover:bg-white rounded transition-colors text-gray-600"><ChevronRight size={16} /></button>
                      </div>
                      
-                     <button onClick={generateAndDownloadZip} disabled={isZipping} className={`flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm ${isZipping ? 'opacity-75 cursor-wait' : 'hover:bg-gray-50'}`} title="Download all 12 months as a single ZIP file">
+                     <button onClick={generateAndDownloadZip} disabled={isZipping} className={`flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm ${isZipping ? 'opacity-75 cursor-wait' : 'hover:bg-gray-50'}`} title="Download Zip">
                       {isZipping ? <Loader2 className="animate-spin" size={20} /> : <Archive size={20} />}
                       <span className="hidden sm:inline">{isZipping ? 'Zipping...' : 'Zip'}</span>
                     </button>
@@ -544,6 +652,162 @@
                     </button>
                   </div>
                 </div>
+
+                {/* Advanced Settings Panel */}
+                {showAdvanced && (
+                    <div className="bg-gray-50 border-t border-gray-200 px-6 py-4 animate-in slide-in-from-top-2 duration-200">
+                        <div className="flex flex-wrap gap-8 items-start justify-center max-w-7xl mx-auto">
+                            
+                            {/* Color Pickers */}
+                            <div className="flex flex-col gap-2">
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Colors</span>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-lg border border-gray-200">
+                                        <div className="flex flex-col items-center gap-1">
+                                            <input type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} title="Text Color" />
+                                            <span className="text-[10px] text-gray-500 font-mono">Text</span>
+                                        </div>
+                                        <div className="w-px h-8 bg-gray-100"></div>
+                                        {/* Background Control with Transparency Toggle */}
+                                        <div className="flex flex-col items-center gap-1">
+                                            <div className="relative group">
+                                               <input 
+                                                  type="color" 
+                                                  value={bgColor} 
+                                                  onChange={(e) => { setBgColor(e.target.value); setTransparent(false); }} 
+                                                  disabled={transparent}
+                                                  title="Background Color" 
+                                                  className={`transition-opacity ${transparent ? 'opacity-20 cursor-not-allowed' : 'cursor-pointer'}`}
+                                               />
+                                               {transparent && (
+                                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-gray-400">
+                                                    <Slash size={20} />
+                                                 </div>
+                                               )}
+                                            </div>
+                                            
+                                            <button 
+                                                onClick={() => setTransparent(!transparent)}
+                                                disabled={exportFormat === 'image/jpeg'}
+                                                className={`text-[9px] font-mono uppercase tracking-tight hover:text-blue-600 ${transparent ? 'text-blue-600 font-bold' : 'text-gray-500'} ${exportFormat === 'image/jpeg' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                title="Toggle Transparent Background"
+                                            >
+                                                {transparent ? 'None' : 'Fill'}
+                                            </button>
+                                        </div>
+                                        <div className="w-px h-8 bg-gray-100"></div>
+                                        <div className="flex flex-col items-center gap-1">
+                                            <input type="color" value={strokeColor} onChange={(e) => setStrokeColor(e.target.value)} title="Grid Lines" />
+                                            <span className="text-[10px] text-gray-500 font-mono">Grid</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex flex-col gap-2">
+                                        <button onClick={toggleDarkMode} className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 text-gray-600" title="Dark Mode Preset">
+                                            {bgColor === '#000000' ? <Sun size={16} /> : <Moon size={16} />}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Typography */}
+                            <div className="flex flex-col gap-2">
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Typography</span>
+                                <div className="flex flex-col gap-2 bg-white p-3 rounded-lg border border-gray-200">
+                                    {/* Font Selector */}
+                                    <div className="flex items-center gap-2 border-b border-gray-100 pb-2 mb-2">
+                                        <Type size={14} className="text-gray-400" />
+                                        <select value={fontName} onChange={(e) => setFontName(e.target.value)} className="bg-transparent text-sm font-semibold text-gray-700 focus:outline-none cursor-pointer w-32">
+                                            {Object.keys(FONTS).map((f) => <option key={f} value={f}>{f}</option>)}
+                                        </select>
+                                    </div>
+                                    
+                                    {/* Size Slider */}
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[10px] text-gray-500 font-mono w-8">Size</span>
+                                        <input 
+                                            type="range" 
+                                            min="20" max="120" 
+                                            value={dayFontSize} 
+                                            onChange={(e) => setDayFontSize(Number(e.target.value))}
+                                            className="w-24 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                        />
+                                        <span className="text-[10px] text-gray-500 font-mono w-6 text-right">{dayFontSize}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Layout */}
+                            <div className="flex flex-col gap-2">
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Layout</span>
+                                <div className="flex flex-col gap-2 bg-white p-3 rounded-lg border border-gray-200 h-full justify-between">
+                                    
+                                    {/* Start of Week Toggle */}
+                                    <div className="flex items-center gap-3 border-b border-gray-100 pb-2">
+                                        <span className="text-[10px] text-gray-500 font-mono">Week Start</span>
+                                        <div className="flex bg-gray-100 p-0.5 rounded text-xs font-medium">
+                                            <button 
+                                                onClick={() => setStartOnSunday(false)}
+                                                className={`px-2 py-0.5 rounded transition-all ${!startOnSunday ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                            >
+                                                Mon
+                                            </button>
+                                            <button 
+                                                onClick={() => setStartOnSunday(true)}
+                                                className={`px-2 py-0.5 rounded transition-all ${startOnSunday ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                            >
+                                                Sun
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Margin Slider */}
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[10px] text-gray-500 font-mono w-8"><Maximize size={10} className="inline mr-1"/>Pad</span>
+                                        <input 
+                                            type="range" 
+                                            min="0" max="150" 
+                                            value={margin} 
+                                            onChange={(e) => setMargin(Number(e.target.value))}
+                                            className="w-24 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                        />
+                                        <span className="text-[10px] text-gray-500 font-mono w-6 text-right">{margin}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Alignment */}
+                            <div className="flex flex-col gap-2">
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Align</span>
+                                <div className="flex gap-2">
+                                    <div className="flex flex-col gap-1 bg-white p-1 rounded-lg border border-gray-200 h-full justify-center">
+                                        <div className="flex gap-1">
+                                            <button onClick={() => setAlignY('top')} className={`p-1.5 rounded hover:bg-gray-100 ${alignY === 'top' ? 'bg-blue-50 text-blue-600' : 'text-gray-400'}`} title="Top"><ArrowUpToLine size={16} /></button>
+                                            <button onClick={() => setAlignY('center')} className={`p-1.5 rounded hover:bg-gray-100 ${alignY === 'center' ? 'bg-blue-50 text-blue-600' : 'text-gray-400'}`} title="Center"><Minus size={16} /></button>
+                                            <button onClick={() => setAlignY('bottom')} className={`p-1.5 rounded hover:bg-gray-100 ${alignY === 'bottom' ? 'bg-blue-50 text-blue-600' : 'text-gray-400'}`} title="Bottom"><ArrowDownToLine size={16} /></button>
+                                        </div>
+                                        <div className="flex gap-1 border-t border-gray-100 pt-1">
+                                            <button onClick={() => setAlignX('left')} className={`p-1.5 rounded hover:bg-gray-100 ${alignX === 'left' ? 'bg-blue-50 text-blue-600' : 'text-gray-400'}`} title="Left"><AlignLeft size={16} /></button>
+                                            <button onClick={() => setAlignX('center')} className={`p-1.5 rounded hover:bg-gray-100 ${alignX === 'center' ? 'bg-blue-50 text-blue-600' : 'text-gray-400'}`} title="Center"><AlignCenter size={16} /></button>
+                                            <button onClick={() => setAlignX('right')} className={`p-1.5 rounded hover:bg-gray-100 ${alignX === 'right' ? 'bg-blue-50 text-blue-600' : 'text-gray-400'}`} title="Right"><AlignRight size={16} /></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Reset */}
+                            <div className="flex flex-col gap-2 h-full justify-end pb-1">
+                                <button 
+                                    onClick={resetSettings}
+                                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                                >
+                                    <RotateCcw size={14} />
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
               </header>
 
               <main className="flex-1 flex flex-col items-center p-8 overflow-y-auto">
@@ -566,20 +830,32 @@
                 </div>
 
                 {/* Preview Container */}
-                <div className={`w-full max-w-5xl rounded-xl shadow-2xl border border-gray-200 overflow-hidden relative transition-colors duration-300 ${transparent ? 'bg-checkerboard' : 'bg-white'}`}>
+                <div className={`w-full max-w-5xl rounded-xl shadow-2xl border border-gray-200 overflow-hidden relative transition-colors duration-300 ${transparent ? 'bg-checkerboard' : ''}`} style={{ backgroundColor: transparent ? '' : bgColor }}>
                   
-                  <div className="p-3 bg-white border-b border-gray-200 flex justify-between items-center text-xs text-gray-500 font-mono">
+                  <div className="p-3 border-b border-gray-200 flex justify-between items-center text-xs text-gray-500 font-mono bg-white">
                      <span>Preview: {LOCALIZATION[lang].months[activeMonth]} {year}</span>
                      <span className="flex items-center gap-2">
                         {exportFormat === 'svg' ? 'Vector' : `${scale}x Resolution`}
                         <span className="w-px h-3 bg-gray-300"></span>
-                        {transparent ? 'Transparent' : (darkMode ? 'Black' : 'White')} BG
+                        {Math.round(CONFIG.width)} x {Math.round(CONFIG.height)}px
                      </span>
                   </div>
 
-                  <div className="p-8 md:p-12 overflow-auto flex justify-center" style={{ backgroundColor: transparent ? 'transparent' : (darkMode ? '#222' : '#f3f4f6') }}>
-                     <div className="shadow-sm border border-gray-300 transition-all" style={{ width: '800px', height: '600px', backgroundColor: transparent ? 'transparent' : (darkMode ? 'black' : 'white') }}>
-                         <CalendarSVGComponent year={year} month={activeMonth} transparent={transparent} lang={lang} darkMode={darkMode} fontName={fontName} />
+                  <div className="p-8 md:p-12 overflow-auto flex justify-center">
+                     <div className="shadow-sm border border-gray-300 transition-all" style={{ width: '800px', height: '600px', backgroundColor: transparent ? 'transparent' : bgColor }}>
+                         <CalendarSVGComponent 
+                            year={year} 
+                            month={activeMonth} 
+                            transparent={transparent} 
+                            lang={lang} 
+                            fontName={fontName}
+                            colors={{ textColor, bgColor, strokeColor }}
+                            dayFontSize={dayFontSize}
+                            alignX={alignX}
+                            alignY={alignY}
+                            marginX={margin}
+                            startOnSunday={startOnSunday}
+                         />
                      </div>
                   </div>
                 </div>
