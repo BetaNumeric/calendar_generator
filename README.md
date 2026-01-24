@@ -6,6 +6,10 @@ I built this simple tool because I needed a better way to generate calendars for
 
 It runs entirely in your browser—no installation or server required. If you need clean SVGs for print design or just a quick high-res calendar image, feel free to use it.
 
+
+<img width="50%" alt="01_january_2027" src="https://github.com/user-attachments/assets/2b9bfdcf-00b2-44c6-a40d-ac59f71a5036" />
+
+
 ## **What it does**
 
 * **Vector SVGs:** Exports clean files where text remains text and grids are simple strokes. Perfect for ungrouping and editing in Illustrator, Inkscape, or Affinity.  
@@ -30,8 +34,6 @@ It runs entirely in your browser—no installation or server required. If you ne
 ## **Under the hood**
 
 It's a **single-file application**. I used React, Tailwind CSS, and Lucide Icons, all loaded via CDN. This means the entire app lives inside one portable index.html file with no build steps or npm install needed.
-
-<img width="50%" alt="01_january_2027" src="https://github.com/user-attachments/assets/2b9bfdcf-00b2-44c6-a40d-ac59f71a5036" />
 
 ## **Keywords**
 
