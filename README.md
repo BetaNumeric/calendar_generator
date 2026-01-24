@@ -17,6 +17,8 @@ It runs entirely in your browser—no installation or server required. If you ne
   * **Colors:** Full control over text, background, and grid colors.  
   * **Layout:** Adjust margins and align numbers (e.g., Top-Left vs Center).  
   * **Week Start:** Toggle between Monday or Sunday start.
+ 
+<img width="1302" height="293" alt="calendar_settings" src="https://github.com/user-attachments/assets/907104eb-c189-4d02-b55f-2cbaeb8170db" />
 
 ## **How to use**
 
@@ -28,6 +30,8 @@ It runs entirely in your browser—no installation or server required. If you ne
 ## **Under the hood**
 
 It's a **single-file application**. I used React, Tailwind CSS, and Lucide Icons, all loaded via CDN. This means the entire app lives inside one portable index.html file with no build steps or npm install needed.
+
+<img width="2400" height="1800" alt="01_january_2027" src="https://github.com/user-attachments/assets/2b9bfdcf-00b2-44c6-a40d-ac59f71a5036" />
 
 ## **Keywords**
 
