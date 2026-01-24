@@ -1,10 +1,10 @@
 # **Calendar Generator**
 
+[**Live Demo**](https://betanumeric.github.io/calendar_generator/)
+
 I built this simple tool because I needed a better way to generate calendars for my design work. I wanted clean, editable vector files for Adobe Illustrator without having to manually type out dates every year.
 
 It runs entirely in your browser—no installation or server required. If you need clean SVGs for print design or just a quick high-res calendar image, feel free to use it.
-
-[**Live Demo**](https://betanumeric.github.io/calendar_generator/)
 
 ## **What it does**
 
