@@ -18,7 +18,7 @@ It runs entirely in your browser—no installation or server required. If you ne
   * **Layout:** Adjust margins and align numbers (e.g., Top-Left vs Center).  
   * **Week Start:** Toggle between Monday or Sunday start.
  
-<img width="1302" height="293" alt="calendar_settings" src="https://github.com/user-attachments/assets/907104eb-c189-4d02-b55f-2cbaeb8170db" />
+<img width="50%" alt="calendar_settings" src="https://github.com/user-attachments/assets/907104eb-c189-4d02-b55f-2cbaeb8170db" />
 
 ## **How to use**
 
