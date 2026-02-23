@@ -75,9 +75,9 @@
         import { createRoot } from 'react-dom/client';
         import { 
             Download, ChevronLeft, ChevronRight, Calendar as CalendarIcon, 
-            FolderDown, Archive, Loader2, Globe, Moon, Sun, Type, Sliders, 
-            RotateCcw, LayoutGrid, AlignCenter, AlignLeft, AlignRight,
-            ArrowUpToLine, ArrowDownToLine, Minus, Grid, MoveHorizontal, Maximize, Slash
+            Archive, Loader2, Globe, Moon, Sun, Type, Sliders, 
+            RotateCcw, AlignCenter, AlignLeft, AlignRight,
+            ArrowUpToLine, ArrowDownToLine, Minus, Maximize, Slash
         } from 'lucide-react';
 
         // --- Constants & Config ---
@@ -161,7 +161,7 @@
             el: {
                 name: "Ελληνικά",
                 months: ["Ιανουάριος", "Φεβρουάριος", "Μάρτιος", "Απρίλιος", "Μάιος", "Ιούνιος", "Ιούλιος", "Αύγουστος", "Σεπτέμβριος", "Οκτώβριος", "Νοέμβριος", "Δεκέμβριος"],
-                days: ["Δευτέρα", "Τρίτη", " Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο", "Κυριακή"]
+                days: ["Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο", "Κυριακή"]
             }
         };
 
@@ -207,19 +207,21 @@
           }
         };
 
-        const styleToString = (styleObj) => {
-          return Object.entries(styleObj).map(([key, value]) => {
-            const kebabKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-            return kebabKey + ':' + value;
-          }).join(';');
-        };
-
         const getFileName = (monthIndex, year, extension, lang) => {
             const monthNum = String(monthIndex + 1).padStart(2, '0');
             const monthName = LOCALIZATION[lang].months[monthIndex].toLowerCase()
                 .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss') 
                 .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
             return monthNum + '_' + monthName + '_' + year + '.' + extension;
+        };
+
+        const escapeXml = (value) => {
+          return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
         };
 
         const loadJSZip = () => {
@@ -337,8 +339,8 @@
           const lineStyle = `stroke:${colors.strokeColor};stroke-width:1`;
           const dateStyle = `${commonStyle};font-size:${dayFontSize}pt`; 
 
-          const titleMonth = '<text x="' + marginX + '" y="90" style="' + titleMonthStyle + '">' + currentLoc.months[month] + '</text>';
-          const titleYear = '<text x="' + (width - marginX) + '" y="90" style="' + titleYearStyle + '">' + year + '</text>';
+          const titleMonth = '<text x="' + marginX + '" y="90" style="' + titleMonthStyle + '">' + escapeXml(currentLoc.months[month]) + '</text>';
+          const titleYear = '<text x="' + (width - marginX) + '" y="90" style="' + titleYearStyle + '">' + escapeXml(year) + '</text>';
 
           const vLines = layout.verticalLines.map(l => 
             '<line x1="' + l.x1 + '" y1="' + l.y1 + '" x2="' + l.x2 + '" y2="' + l.y2 + '" style="' + lineStyle + '" />'
@@ -349,11 +351,11 @@
           ).join('');
 
           const headers = layout.headers.map(h => 
-            '<text x="' + h.x + '" y="' + h.y + '" style="' + headerStyle + '">' + h.text + '</text>'
+            '<text x="' + h.x + '" y="' + h.y + '" style="' + headerStyle + '">' + escapeXml(h.text) + '</text>'
           ).join('');
 
           const dates = layout.dates.map(d => 
-            '<text x="' + d.x + '" y="' + d.y + '" style="' + dateStyle + ';text-anchor:' + d.anchor + '">' + d.day + '</text>'
+            '<text x="' + d.x + '" y="' + d.y + '" style="' + dateStyle + ';text-anchor:' + d.anchor + '">' + escapeXml(d.day) + '</text>'
           ).join('');
 
           const bgStyle = transparentBg ? '' : 'background-color:' + colors.bgColor + ';';
@@ -460,6 +462,12 @@
           const [margin, setMargin] = useState(DEFAULTS.margin);
           const [startOnSunday, setStartOnSunday] = useState(DEFAULTS.startOnSunday);
 
+          useEffect(() => {
+            if (exportFormat === 'image/jpeg' && transparent) {
+              setTransparent(false);
+            }
+          }, [exportFormat, transparent]);
+
           const getExtension = () => exportFormat === 'svg' ? 'svg' : (exportFormat === 'image/jpeg' ? 'jpg' : 'png');
 
           // Presets
@@ -524,14 +532,19 @@
           };
 
           const generateAndDownloadSingle = async (monthIndex) => {
-            const result = await getMonthData(monthIndex);
-            const fileName = getFileName(monthIndex, year, getExtension(), lang);
-            
-            if (result.isBase64) {
-                 downloadFile(`data:${exportFormat};base64,${result.data}`, fileName);
-            } else {
-                 const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(result.data);
-                 downloadFile(url, fileName);
+            try {
+              const result = await getMonthData(monthIndex);
+              const fileName = getFileName(monthIndex, year, getExtension(), lang);
+              
+              if (result.isBase64) {
+                   downloadFile(`data:${exportFormat};base64,${result.data}`, fileName);
+              } else {
+                   const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(result.data);
+                   downloadFile(url, fileName);
+              }
+            } catch (error) {
+              console.error("Single file export failed:", error);
+              alert("Failed to generate file. Please try a lower resolution or another format.");
             }
           };
 

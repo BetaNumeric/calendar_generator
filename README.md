@@ -11,7 +11,7 @@ It runs entirely in your browser—no installation or server required. If you ne
 * **Vector SVGs:** Exports clean files where text remains text and grids are simple strokes. Perfect for ungrouping and editing in Illustrator, Inkscape, or Affinity.  
 * **Raster Images:** Can also save high-resolution PNG or JPG files (up to 9600px).  
 * **Batch Export:** Download the entire year as a .zip file.  
-* **Localization:** Supports 16 languages, including English, German, French, Spanish, Italian, Portuguese, Dutch, Polish, Russian, Ukrainian, Turkish, Greek, Danish, Norwegian, Swedish, and Dutch.  
+* **Localization:** Supports 16 languages, including English, German, French, Spanish, Italian, Portuguese, Dutch, Polish, Romanian, Russian, Ukrainian, Turkish, Greek, Danish, Norwegian, and Swedish.  
 * **Deep Customization:**  
   * **Typography:** Choose fonts and adjust date sizes.  
   * **Colors:** Full control over text, background, and grid colors.  
@@ -36,4 +36,3 @@ calendar generator, svg calendar, vector calendar, adobe illustrator calendar sc
 ## **License**
 
 Free to use for personal and commercial projects.
-
