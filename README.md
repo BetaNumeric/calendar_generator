@@ -1,10 +1,14 @@
 # **Calendar Generator**
 
+[**Live Demo**](https://betanumeric.github.io/calendar_generator/)
+
 I built this simple tool because I needed a better way to generate calendars for my design work. I wanted clean, editable vector files for Adobe Illustrator without having to manually type out dates every year.
 
 It runs entirely in your browser—no installation or server required. If you need clean SVGs for print design or just a quick high-res calendar image, feel free to use it.
 
-[**Live Demo**](https://betanumeric.github.io/calendar_generator/)
+
+<img width="50%" alt="01_january_2027" src="https://github.com/user-attachments/assets/2b9bfdcf-00b2-44c6-a40d-ac59f71a5036" />
+
 
 ## **What it does**
 
@@ -17,6 +21,8 @@ It runs entirely in your browser—no installation or server required. If you ne
   * **Colors:** Full control over text, background, and grid colors.  
   * **Layout:** Adjust margins and align numbers (e.g., Top-Left vs Center).  
   * **Week Start:** Toggle between Monday or Sunday start.
+ 
+<img width="100%" alt="calendar_settings" src="https://github.com/user-attachments/assets/907104eb-c189-4d02-b55f-2cbaeb8170db" />
 
 ## **How to use**
 
