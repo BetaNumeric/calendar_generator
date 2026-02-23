@@ -21,6 +21,7 @@ It runs entirely in your browser—no installation or server required. If you ne
   * **Colors:** Full control over text, background, and grid colors.  
   * **Layout:** Adjust margins and align numbers (e.g., Top-Left vs Center).  
   * **Week Start:** Toggle between Monday or Sunday start.
+  * **Events:** Manage recurring custom events in a collapsible side panel, click to edit quickly, keep them saved in your browser, and optionally center labels above dates with faded day numbers.
  
 <img width="100%" alt="calendar_settings" src="https://github.com/user-attachments/assets/907104eb-c189-4d02-b55f-2cbaeb8170db" />
 
